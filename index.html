@@ -1,15 +1,460 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>تطبيق الأنمي الشامل</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تطبيق الأنمي الشامل</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #121212;
+            color: #ffffff;
+            padding: 15px;
+            padding-bottom: 80px;
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #2a2a2a;
+        }
+
+        .logo {
+            font-size: 1.4rem;
+            font-weight: bold;
+            color: #ff4757;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .auth-status {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .badge {
+            background-color: #2ed573;
+            color: #000;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: bold;
+        }
+
+        .login-btn {
+            background-color: #333;
+            color: #fff;
+            border: 1px solid #555;
+            padding: 5px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.8rem;
+        }
+
+        .categories-bar {
+            display: flex;
+            gap: 10px;
+            overflow-x: auto;
+            padding: 15px 0 5px 0;
+            scrollbar-width: none;
+        }
+
+        .category-chip {
+            background-color: #1e1e1e;
+            color: #ccc;
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid #333;
+            white-space: nowrap;
+            cursor: pointer;
+            font-size: 0.85rem;
+            transition: 0.2s;
+        }
+
+        .category-chip.active, .category-chip:hover {
+            background-color: #ff4757;
+            color: #fff;
+            border-color: #ff4757;
+        }
+
+        .search-container {
+            margin: 10px 0;
+        }
+
+        .search-bar {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid #333;
+            background-color: #1e1e1e;
+            color: #fff;
+            font-size: 0.9rem;
+        }
+
+        .section-title {
+            margin: 20px 0 10px 0;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .anime-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 15px;
+        }
+
+        .anime-card {
+            background-color: #1e1e1e;
+            border-radius: 10px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            border: 1px solid #2a2a2a;
+        }
+
+        .poster-wrapper {
+            position: relative;
+            width: 100%;
+            height: 190px;
+        }
+
+        .poster {
+            width: 100%;
+            height: 100%;
+            background-color: #333;
+            object-fit: cover;
+        }
+
+        .card-details {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+            flex-grow: 1;
+        }
+
+        .anime-title {
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .meta-info {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.7rem;
+            color: #aaa;
+        }
+
+        .action-btn {
+            background-color: #ff4757;
+            color: white;
+            border: none;
+            padding: 8px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 0.75rem;
+            text-align: center;
+            margin-top: auto;
+        }
+
+        .delete-btn {
+            background-color: #ff3f34;
+            margin-top: 4px;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0,0,0,0.85);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-content {
+            background-color: #1e1e1e;
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 360px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .input-field {
+            width: 100%;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid #333;
+            background-color: #2b2b2b;
+            color: #fff;
+            outline: none;
+        }
+
+        #ownerPanel {
+            display: none;
+            background-color: #1e1e1e;
+            border: 1px solid #ff4757;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 15px 0;
+        }
+    </style>
+
+    <!-- استدعاء Firebase SDKs -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        // إعدادات مشروعك الحقيقية من Firebase
+        const firebaseConfig = {
+          apiKey: "AIzaSyAmhWP8wdACdpYz1RbmfR2pDYTG5bguwM8",
+          authDomain: "animeapp-6533b.firebaseapp.com",
+          projectId: "animeapp-6533b",
+          storageBucket: "animeapp-6533b.firebasestorage.app",
+          messagingSenderId: "295896760420",
+          appId: "1:295896760420:web:9cf2852bece9d4b3415f71",
+          measurementId: "G-88DSZP0NZZ"
+        };
+
+        // تهيئة Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        // جعل المتغيرات متاحة عالمياً للسكربت الرئيسي
+        window.db = db;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.onSnapshot = onSnapshot;
+        window.deleteDoc = deleteDoc;
+        window.doc = doc;
+    </script>
 </head>
 <body>
-<!--
-تم إنشاء ملف indix.html.
-ضع هنا محتوى صفحة تطبيق الأنمي الذي أرسلته بالكامل.
--->
-<h1>🎬 أنمي العائلة</h1>
+
+    <header>
+        <div class="logo">🎬 أنمي العائلة</div>
+        <div class="auth-status">
+            <span id="roleBadge" class="badge">آمن 100%</span>
+            <button id="loginBtn" class="login-btn" onclick="openModal('loginModal')">دخول المالك</button>
+        </div>
+    </header>
+
+    <!-- شريط التصنيفات -->
+    <div class="categories-bar">
+        <button class="category-chip active" onclick="filterByCategory('الكل')">الكل</button>
+        <button class="category-chip" onclick="filterByCategory('أكشن')">🔥 أكشن</button>
+        <button class="category-chip" onclick="filterByCategory('مغامرات')">🧭 مغامرات</button>
+        <button class="category-chip" onclick="filterByCategory('رياضي')">⚽ رياضي</button>
+        <button class="category-chip" onclick="filterByCategory('عائلي')">👨‍👩‍👧‍👦 عائلي</button>
+    </div>
+
+    <!-- البحث -->
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-bar" placeholder="🔍 ابحث عن أنمي، فيلم، أو تصنيف..." onkeyup="searchAnime()">
+    </div>
+
+    <!-- لوحة المالك -->
+    <div id="ownerPanel">
+        <h3 style="color:#2ed573; margin-bottom:10px;">⚙️ لوحة المالك (سحابية مباشر)</h3>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+            <input type="text" id="titleInput" class="input-field" placeholder="اسم العمل">
+            <input type="text" id="categoryInput" class="input-field" placeholder="التصنيف (أكشن، مغامرات...)">
+            <input type="text" id="sizeInput" class="input-field" placeholder="حجم الملف (مثال: 180MB)">
+            <input type="url" id="imageInput" class="input-field" placeholder="رابط صورة الغلاف">
+            <input type="url" id="videoInput" class="input-field" placeholder="رابط التحميل Direct MP4">
+            <button class="action-btn" style="background-color:#2ed573; color:#000;" onclick="addAnimeToFirebase()">إضافة ومشاركة مع الجميع 🚀</button>
+        </div>
+    </div>
+
+    <!-- شبكة المحتوى -->
+    <div class="section-title">
+        <span id="mainGridTitle">جميع الأعمال المتاحة (سحابية)</span>
+    </div>
+    <div class="anime-grid" id="animeGrid"></div>
+
+    <!-- نافذة دخول المالك -->
+    <div id="loginModal" class="modal">
+        <div class="modal-content">
+            <h3 style="color:#ff4757; text-align:center;">تسجيل دخول المالك</h3>
+            <input type="email" id="emailInput" class="input-field" placeholder="البريد الإلكتروني">
+            <input type="password" id="pinInput" class="input-field" placeholder="رمز PIN (148963)" maxlength="6">
+            <button class="action-btn" onclick="authenticateOwner()">تفعيل وضع المالك</button>
+            <button class="login-btn" onclick="closeModal('loginModal')">إلغاء</button>
+        </div>
+    </div>
+
+    <script>
+        const OWNER_EMAIL = "amsahli86@gmail.com";
+        const OWNER_PIN = "148963";
+
+        let isOwner = false;
+        let globalAnimeList = [];
+        let activeCategory = 'الكل';
+
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        // التحقق من المالك
+        function authenticateOwner() {
+            const email = document.getElementById('emailInput').value.trim();
+            const pin = document.getElementById('pinInput').value.trim();
+
+            if (email === OWNER_EMAIL && pin === OWNER_PIN) {
+                isOwner = true;
+                document.getElementById('roleBadge').innerText = "وضع المالك 👑";
+                document.getElementById('roleBadge').style.backgroundColor = "#ff4757";
+                document.getElementById('ownerPanel').style.display = 'block';
+                document.getElementById('loginBtn').innerText = "خروج";
+                document.getElementById('loginBtn').onclick = logoutOwner;
+                closeModal('loginModal');
+                renderCards(globalAnimeList);
+                alert("تم تفعيل وضع المالك المباشر! أي إضافة الآن ستصل لجميع المستخدمين.");
+            } else {
+                alert("البريد أو الرمز غير صحيح!");
+            }
+        }
+
+        function logoutOwner() {
+            isOwner = false;
+            document.getElementById('roleBadge').innerText = "آمن 100%";
+            document.getElementById('roleBadge').style.backgroundColor = "#2ed573";
+            document.getElementById('ownerPanel').style.display = 'none';
+            document.getElementById('loginBtn').innerText = "دخول المالك";
+            document.getElementById('loginBtn').onclick = () => openModal('loginModal');
+            renderCards(globalAnimeList);
+        }
+
+        // الاستماع المباشر للتحديثات من Firebase
+        window.addEventListener('load', () => {
+            const checkFirebase = setInterval(() => {
+                if (window.db) {
+                    clearInterval(checkFirebase);
+                    
+                    // ربط القراءة المباشرة
+                    window.onSnapshot(window.collection(window.db, "animes"), (snapshot) => {
+                        globalAnimeList = [];
+                        snapshot.forEach((doc) => {
+                            globalAnimeList.push({ id: doc.id, ...doc.data() });
+                        });
+                        renderCards(globalAnimeList);
+                    });
+                }
+            }, 300);
+        });
+
+        // إضافة أنمي جديد إلى Firebase سحابياً
+        async function addAnimeToFirebase() {
+            const title = document.getElementById('titleInput').value.trim();
+            const category = document.getElementById('categoryInput').value.trim() || "عام";
+            const size = document.getElementById('sizeInput').value.trim() || "150MB";
+            const image = document.getElementById('imageInput').value.trim() || "https://via.placeholder.com/150x200?text=Anime";
+            const videoUrl = document.getElementById('videoInput').value.trim() || "#";
+
+            if (!title) return alert("يرجى إدخال اسم العمل!");
+
+            try {
+                await window.addDoc(window.collection(window.db, "animes"), {
+                    title, category, size, image, videoUrl, rating: "5.0", createdAt: Date.now()
+                });
+                
+                alert("تمت الإضافة بنجاح! وستظهر فوراً عند كافة مستخدمي التطبيق.");
+                document.getElementById('titleInput').value = "";
+                document.getElementById('categoryInput').value = "";
+                document.getElementById('sizeInput').value = "";
+                document.getElementById('imageInput').value = "";
+                document.getElementById('videoInput').value = "";
+            } catch (e) {
+                alert("حدث خطأ أثناء الإضافة: " + e.message);
+            }
+        }
+
+        // حذف عمل من السيرفر السحابي
+        async function deleteAnimeFromFirebase(docId) {
+            if (confirm("هل أنت تأكد من حذف هذا العمل نهائياً من السيرفر؟")) {
+                try {
+                    await window.deleteDoc(window.doc(window.db, "animes", docId));
+                } catch (e) {
+                    alert("خطأ أثناء الحذف: " + e.message);
+                }
+            }
+        }
+
+        // عرض البطاقات
+        function renderCards(list) {
+            const grid = document.getElementById('animeGrid');
+            grid.innerHTML = "";
+
+            let filtered = list;
+            if (activeCategory !== 'الكل') {
+                filtered = filtered.filter(i => i.category === activeCategory);
+            }
+
+            if(filtered.length === 0) {
+                grid.innerHTML = '<p style="color:#aaa; grid-column:1/-1; text-align:center;">لا توجد أعمال مضافة حالياً.</p>';
+                return;
+            }
+
+            filtered.forEach(item => {
+                const deleteBtn = isOwner ? `<button class="action-btn delete-btn" onclick="deleteAnimeFromFirebase('${item.id}')">حذف 🗑️</button>` : '';
+
+                const card = document.createElement('div');
+                card.className = 'anime-card';
+                card.innerHTML = `
+                    <div class="poster-wrapper">
+                        <img src="${item.image}" alt="${item.title}" class="poster">
+                    </div>
+                    <div class="card-details">
+                        <div class="anime-title">${item.title}</div>
+                        <div class="meta-info">
+                            <span>${item.category}</span>
+                            <span>💾 ${item.size}</span>
+                        </div>
+                        <button class="action-btn" onclick="downloadVideo('${item.title}', '${item.videoUrl}')">تنزيل 📥</button>
+                        ${deleteBtn}
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        function filterByCategory(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.category-chip').forEach(chip => {
+                chip.classList.toggle('active', chip.innerText.includes(cat) || (cat==='الكل' && chip.innerText==='الكل'));
+            });
+            renderCards(globalAnimeList);
+        }
+
+        function searchAnime() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const results = globalAnimeList.filter(i => i.title.toLowerCase().includes(q) || i.category.toLowerCase().includes(q));
+            renderCards(results);
+        }
+
+        function downloadVideo(title, url) {
+            alert(`جاري تنزيل: ${title}`);
+            if(url !== "#") window.open(url, '_blank');
+        }
+    </script>
 </body>
 </html>
