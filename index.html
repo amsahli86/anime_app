@@ -3,229 +3,441 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>تطبيق الأنمي الشامل</title>
+    <title>أنمي العائلة - Neon Cinema</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-color: #08090c;
+            --card-bg: #10141d;
+            --neon-blue: #00d2ff;
+            --neon-glow: rgba(0, 210, 255, 0.4);
+            --text-main: #ffffff;
+            --text-muted: #8a99ad;
+        }
+
         * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Cairo', sans-serif;
         }
 
         body {
-            background-color: #121212;
-            color: #ffffff;
-            padding: 15px;
-            padding-bottom: 80px;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            padding-bottom: 50px;
+            overflow-x: hidden;
         }
 
+        /* Header */
         header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding-bottom: 15px;
-            border-bottom: 1px solid #2a2a2a;
+            padding: 15px 20px;
+            background: rgba(8, 9, 12, 0.85);
+            backdrop-filter: blur(10px);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            border-bottom: 1px solid rgba(0, 210, 255, 0.15);
         }
 
-        .logo {
-            font-size: 1.4rem;
-            font-weight: bold;
-            color: #ff4757;
+        .logo-container {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 12px;
         }
 
-        .auth-status {
+        .logo-icon {
+            width: 38px;
+            height: 38px;
+            background: radial-gradient(circle, #00d2ff 0%, #0055ff 100%);
+            border-radius: 10px;
             display: flex;
+            justify-content: center;
             align-items: center;
-            gap: 10px;
+            box-shadow: 0 0 15px var(--neon-glow);
+            font-size: 1.2rem;
         }
 
-        .badge {
-            background-color: #2ed573;
-            color: #000;
-            padding: 4px 8px;
-            border-radius: 12px;
-            font-size: 0.75rem;
-            font-weight: bold;
+        .logo-text {
+            font-size: 1.3rem;
+            font-weight: 900;
+            background: linear-gradient(90deg, #fff, var(--neon-blue));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
-        .login-btn {
-            background-color: #333;
-            color: #fff;
-            border: 1px solid #555;
-            padding: 5px 10px;
-            border-radius: 6px;
+        .auth-btn {
+            background: transparent;
+            color: var(--neon-blue);
+            border: 1px solid var(--neon-blue);
+            padding: 6px 14px;
+            border-radius: 20px;
             cursor: pointer;
-            font-size: 0.8rem;
+            font-weight: 600;
+            font-size: 0.85rem;
+            box-shadow: 0 0 10px rgba(0, 210, 255, 0.2);
+            transition: 0.3s;
         }
 
-        .categories-bar {
+        .auth-btn:hover {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 20px var(--neon-blue);
+        }
+
+        /* Hero Banner */
+        .hero {
+            position: relative;
+            height: 220px;
+            margin: 15px 20px;
+            border-radius: 16px;
+            overflow: hidden;
+            background: linear-gradient(to top, rgba(8,9,12,1), rgba(8,9,12,0.2)), url('https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1000') center/cover;
+            display: flex;
+            align-items: flex-end;
+            padding: 20px;
+            border: 1px solid rgba(0, 210, 255, 0.2);
+            box-shadow: 0 0 25px rgba(0, 210, 255, 0.1);
+        }
+
+        .hero-content h2 {
+            font-size: 1.4rem;
+            font-weight: 900;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+        }
+
+        .hero-content p {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Search & Categories */
+        .search-box {
+            padding: 0 20px;
+            margin-bottom: 15px;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 12px 18px;
+            background: var(--card-bg);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            color: #fff;
+            outline: none;
+            font-size: 0.9rem;
+            transition: 0.3s;
+        }
+
+        .search-input:focus {
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 12px var(--neon-glow);
+        }
+
+        .categories {
             display: flex;
             gap: 10px;
             overflow-x: auto;
-            padding: 15px 0 5px 0;
+            padding: 0 20px 15px 20px;
             scrollbar-width: none;
         }
 
-        .category-chip {
-            background-color: #1e1e1e;
-            color: #ccc;
-            padding: 8px 16px;
+        .chip {
+            background: var(--card-bg);
+            color: var(--text-muted);
+            padding: 6px 16px;
             border-radius: 20px;
-            border: 1px solid #333;
+            font-size: 0.85rem;
             white-space: nowrap;
             cursor: pointer;
-            font-size: 0.85rem;
-            transition: 0.2s;
+            border: 1px solid rgba(255,255,255,0.05);
+            transition: 0.3s;
         }
 
-        .category-chip.active, .category-chip:hover {
-            background-color: #ff4757;
-            color: #fff;
-            border-color: #ff4757;
+        .chip.active, .chip:hover {
+            background: var(--neon-blue);
+            color: #000;
+            font-weight: 700;
+            box-shadow: 0 0 15px var(--neon-glow);
         }
 
-        .search-container {
-            margin: 10px 0;
-        }
-
-        .search-bar {
-            width: 100%;
-            padding: 12px;
-            border-radius: 8px;
-            border: 1px solid #333;
-            background-color: #1e1e1e;
-            color: #fff;
-            font-size: 0.9rem;
-        }
-
+        /* Anime Grid */
         .section-title {
-            margin: 20px 0 10px 0;
+            padding: 0 20px;
+            margin-bottom: 15px;
             font-size: 1.1rem;
+            font-weight: 700;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            gap: 8px;
+        }
+
+        .section-title::before {
+            content: '';
+            width: 4px;
+            height: 18px;
+            background: var(--neon-blue);
+            border-radius: 2px;
+            box-shadow: 0 0 8px var(--neon-blue);
         }
 
         .anime-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
             gap: 15px;
+            padding: 0 20px;
         }
 
         .anime-card {
-            background-color: #1e1e1e;
-            border-radius: 10px;
+            background: var(--card-bg);
+            border-radius: 12px;
             overflow: hidden;
-            display: flex;
-            flex-direction: column;
+            cursor: pointer;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: 0.3s;
             position: relative;
-            border: 1px solid #2a2a2a;
         }
 
-        .poster-wrapper {
-            position: relative;
+        .anime-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--neon-blue);
+            box-shadow: 0 5px 20px var(--neon-glow);
+        }
+
+        .poster-container {
             width: 100%;
-            height: 190px;
+            height: 180px;
+            position: relative;
         }
 
-        .poster {
+        .poster-container img {
             width: 100%;
             height: 100%;
-            background-color: #333;
             object-fit: cover;
         }
 
-        .card-details {
+        .episodes-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0, 0, 0, 0.75);
+            color: var(--neon-blue);
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            border: 1px solid var(--neon-blue);
+            backdrop-filter: blur(4px);
+        }
+
+        .card-info {
             padding: 10px;
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
-            flex-grow: 1;
         }
 
         .anime-title {
             font-size: 0.85rem;
-            font-weight: 600;
+            font-weight: 700;
             white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
         }
 
-        .meta-info {
+        .anime-meta {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 4px;
             display: flex;
             justify-content: space-between;
-            font-size: 0.7rem;
-            color: #aaa;
         }
 
-        .action-btn {
-            background-color: #ff4757;
-            color: white;
-            border: none;
-            padding: 8px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            font-size: 0.75rem;
-            text-align: center;
-            margin-top: auto;
-        }
-
-        .delete-btn {
-            background-color: #ff3f34;
-            margin-top: 4px;
-        }
-
-        .modal {
+        /* Detail Modal */
+        .full-modal {
             display: none;
             position: fixed;
             top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.85);
+            background: var(--bg-color);
+            z-index: 200;
+            overflow-y: auto;
+            animation: fadeIn 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-header-bg {
+            width: 100%;
+            height: 250px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .modal-overlay {
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(to top, var(--bg-color), transparent);
+            display: flex;
+            align-items: flex-start;
+            padding: 20px;
+        }
+
+        .close-btn {
+            background: rgba(0,0,0,0.6);
+            color: #fff;
+            border: 1px solid var(--neon-blue);
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 1.2rem;
+            display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
+            backdrop-filter: blur(5px);
         }
 
-        .modal-content {
-            background-color: #1e1e1e;
-            padding: 20px;
-            border-radius: 12px;
-            width: 90%;
-            max-width: 360px;
+        .details-body {
+            padding: 0 20px 30px 20px;
+            margin-top: -60px;
+            position: relative;
+        }
+
+        .details-title {
+            font-size: 1.6rem;
+            font-weight: 900;
+        }
+
+        .details-tags {
+            display: flex;
+            gap: 10px;
+            margin: 10px 0;
+            font-size: 0.8rem;
+            color: var(--neon-blue);
+        }
+
+        .details-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            line-height: 1.5;
+            margin-bottom: 20px;
+        }
+
+        /* Episodes List */
+        .episodes-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            padding-bottom: 8px;
+        }
+
+        .episode-card {
+            background: var(--card-bg);
+            border-radius: 10px;
+            padding: 12px 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .ep-info {
             display: flex;
             flex-direction: column;
-            gap: 12px;
         }
 
-        .input-field {
-            width: 100%;
-            padding: 10px;
+        .ep-name {
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        .ep-size {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .ep-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .btn-action {
+            padding: 6px 12px;
             border-radius: 6px;
-            border: 1px solid #333;
-            background-color: #2b2b2b;
-            color: #fff;
-            outline: none;
+            border: none;
+            font-size: 0.75rem;
+            font-weight: 700;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
         }
 
+        .btn-watch {
+            background: var(--neon-blue);
+            color: #000;
+            box-shadow: 0 0 10px var(--neon-glow);
+        }
+
+        .btn-download {
+            background: transparent;
+            color: #fff;
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+
+        /* Owner Panel */
         #ownerPanel {
             display: none;
-            background-color: #1e1e1e;
-            border: 1px solid #ff4757;
-            padding: 15px;
-            border-radius: 10px;
-            margin: 15px 0;
+            background: var(--card-bg);
+            border: 1px solid var(--neon-blue);
+            margin: 20px;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 0 20px var(--neon-glow);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .form-input {
+            padding: 10px;
+            background: #08090c;
+            border: 1px solid rgba(255,255,255,0.1);
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.85rem;
+        }
+
+        .form-input:focus {
+            border-color: var(--neon-blue);
+        }
+
+        .owner-btn {
+            background: var(--neon-blue);
+            color: #000;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: 700;
+            cursor: pointer;
         }
     </style>
 
-    <!-- استدعاء Firebase SDKs -->
+    <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        // إعدادات مشروعك الحقيقية من Firebase
         const firebaseConfig = {
           apiKey: "AIzaSyAmhWP8wdACdpYz1RbmfR2pDYTG5bguwM8",
           authDomain: "animeapp-6533b.firebaseapp.com",
@@ -236,11 +448,9 @@
           measurementId: "G-88DSZP0NZZ"
         };
 
-        // تهيئة Firebase
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        // جعل المتغيرات متاحة عالمياً للسكربت الرئيسي
         window.db = db;
         window.collection = collection;
         window.addDoc = addDoc;
@@ -252,54 +462,78 @@
 <body>
 
     <header>
-        <div class="logo">🎬 أنمي العائلة</div>
-        <div class="auth-status">
-            <span id="roleBadge" class="badge">آمن 100%</span>
-            <button id="loginBtn" class="login-btn" onclick="openModal('loginModal')">دخول المالك</button>
+        <div class="logo-container">
+            <div class="logo-icon">🕊️</div>
+            <div class="logo-text">أنمي العائلة</div>
         </div>
+        <button id="loginBtn" class="auth-btn" onclick="openLoginModal()">دخول المالك</button>
     </header>
 
-    <!-- شريط التصنيفات -->
-    <div class="categories-bar">
-        <button class="category-chip active" onclick="filterByCategory('الكل')">الكل</button>
-        <button class="category-chip" onclick="filterByCategory('أكشن')">🔥 أكشن</button>
-        <button class="category-chip" onclick="filterByCategory('مغامرات')">🧭 مغامرات</button>
-        <button class="category-chip" onclick="filterByCategory('رياضي')">⚽ رياضي</button>
-        <button class="category-chip" onclick="filterByCategory('عائلي')">👨‍👩‍👧‍👦 عائلي</button>
-    </div>
-
-    <!-- البحث -->
-    <div class="search-container">
-        <input type="text" id="searchInput" class="search-bar" placeholder="🔍 ابحث عن أنمي، فيلم، أو تصنيف..." onkeyup="searchAnime()">
-    </div>
-
-    <!-- لوحة المالك -->
-    <div id="ownerPanel">
-        <h3 style="color:#2ed573; margin-bottom:10px;">⚙️ لوحة المالك (سحابية مباشر)</h3>
-        <div style="display:flex; flex-direction:column; gap:8px;">
-            <input type="text" id="titleInput" class="input-field" placeholder="اسم العمل">
-            <input type="text" id="categoryInput" class="input-field" placeholder="التصنيف (أكشن، مغامرات...)">
-            <input type="text" id="sizeInput" class="input-field" placeholder="حجم الملف (مثال: 180MB)">
-            <input type="url" id="imageInput" class="input-field" placeholder="رابط صورة الغلاف">
-            <input type="url" id="videoInput" class="input-field" placeholder="رابط التحميل Direct MP4">
-            <button class="action-btn" style="background-color:#2ed573; color:#000;" onclick="addAnimeToFirebase()">إضافة ومشاركة مع الجميع 🚀</button>
+    <!-- Hero Banner -->
+    <div class="hero">
+        <div class="hero-content">
+            <h2>عالم الأنمي بين يديك</h2>
+            <p>شاهد ونزل أحدث الحلقات بجودة عالية وبدون إعلانات مزعجة.</p>
         </div>
     </div>
 
-    <!-- شبكة المحتوى -->
-    <div class="section-title">
-        <span id="mainGridTitle">جميع الأعمال المتاحة (سحابية)</span>
+    <!-- Search Bar -->
+    <div class="search-box">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 ابحث عن أنمي، فيلم، تصنيف..." onkeyup="searchAnime()">
     </div>
+
+    <!-- Categories -->
+    <div class="categories">
+        <div class="chip active" onclick="filterCategory('الكل')">الكل</div>
+        <div class="chip" onclick="filterCategory('أكشن')">🔥 أكشن</div>
+        <div class="chip" onclick="filterCategory('مغامرات')">🧭 مغامرات</div>
+        <div class="chip" onclick="filterCategory('خيال علمي')">⚡ خيال علمي</div>
+        <div class="chip" onclick="filterCategory('رياضي')">⚽ رياضي</div>
+    </div>
+
+    <!-- Owner Control Panel -->
+    <div id="ownerPanel">
+        <h3 style="color:var(--neon-blue); margin-bottom:12px;">⚙️ إضافة أنمي وحلقات جديدة</h3>
+        <div class="input-group">
+            <input type="text" id="animeTitle" class="form-input" placeholder="اسم الأنمي">
+            <input type="text" id="animeCat" class="form-input" placeholder="التصنيف (أكشن، غموض...)">
+            <input type="text" id="animeYear" class="form-input" placeholder="سنة الإصدار (مثال: 2024)">
+            <input type="url" id="animePoster" class="form-input" placeholder="رابط صورة البوستر">
+            <textarea id="animeDesc" class="form-input" placeholder="قصة الأنمي (نبذة قصيرة)"></textarea>
+            
+            <hr style="border-color:rgba(255,255,255,0.1); margin:5px 0;">
+            <p style="font-size:0.8rem; color:var(--neon-blue);">تفاصيل الحلقة الأولى (اختياري عند الإنشاء):</p>
+            <input type="text" id="epTitle" class="form-input" placeholder="اسم/رقم الحلقة (مثال: الحلقة 01)">
+            <input type="text" id="epSize" class="form-input" placeholder="حجم الحلقة (مثال: 180MB)">
+            <input type="url" id="epWatchUrl" class="form-input" placeholder="رابط المشاهدة/التنزيل (Archive / Telegram)">
+        </div>
+        <button class="owner-btn" onclick="addAnimeToFirebase()">إضافة الأنمي الآن 🚀</button>
+    </div>
+
+    <!-- Main Content Grid -->
+    <div class="section-title">الأعمال المتاحة</div>
     <div class="anime-grid" id="animeGrid"></div>
 
-    <!-- نافذة دخول المالك -->
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <h3 style="color:#ff4757; text-align:center;">تسجيل دخول المالك</h3>
-            <input type="email" id="emailInput" class="input-field" placeholder="البريد الإلكتروني">
-            <input type="password" id="pinInput" class="input-field" placeholder="رمز PIN (148963)" maxlength="6">
-            <button class="action-btn" onclick="authenticateOwner()">تفعيل وضع المالك</button>
-            <button class="login-btn" onclick="closeModal('loginModal')">إلغاء</button>
+    <!-- Detail & Episodes Modal -->
+    <div id="detailModal" class="full-modal">
+        <div class="modal-header-bg" id="modalBg">
+            <div class="modal-overlay">
+                <button class="close-btn" onclick="closeDetailModal()">✕</button>
+            </div>
+        </div>
+        <div class="details-body">
+            <div class="details-title" id="modalTitle">اسم الأنمي</div>
+            <div class="details-tags">
+                <span id="modalCat">التصنيف</span> • 
+                <span id="modalYear">السنة</span>
+            </div>
+            <div class="details-desc" id="modalDesc">قصة الأنمي...</div>
+
+            <div class="episodes-title">قائمة الحلقات 🎬</div>
+            <div id="episodesList">
+                <!-- الحلقات تظهر هنا -->
+            </div>
+            <button id="deleteAnimeBtn" class="owner-btn" style="background:#ff3f34; color:#fff; width:100%; margin-top:15px; display:none;">حذف هذا العمل نهائياً 🗑️</button>
         </div>
     </div>
 
@@ -310,151 +544,87 @@
         let isOwner = false;
         let globalAnimeList = [];
         let activeCategory = 'الكل';
+        let currentSelectedAnime = null;
 
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
-
-        // التحقق من المالك
-        function authenticateOwner() {
-            const email = document.getElementById('emailInput').value.trim();
-            const pin = document.getElementById('pinInput').value.trim();
-
-            if (email === OWNER_EMAIL && pin === OWNER_PIN) {
+        function openLoginModal() {
+            const email = prompt("أدخل البريد الإلكتروني للمالك:");
+            const pin = prompt("أدخل رمز PIN:");
+            if(email === OWNER_EMAIL && pin === OWNER_PIN) {
                 isOwner = true;
-                document.getElementById('roleBadge').innerText = "وضع المالك 👑";
-                document.getElementById('roleBadge').style.backgroundColor = "#ff4757";
                 document.getElementById('ownerPanel').style.display = 'block';
-                document.getElementById('loginBtn').innerText = "خروج";
-                document.getElementById('loginBtn').onclick = logoutOwner;
-                closeModal('loginModal');
-                renderCards(globalAnimeList);
-                alert("تم تفعيل وضع المالك المباشر! أي إضافة الآن ستصل لجميع المستخدمين.");
+                document.getElementById('loginBtn').innerText = "وضع المالك 👑";
+                alert("أهلاً بك يا مالك التطبيق! يمكنك الآن إضافة الأنميات والحلقات.");
+                renderGrid(globalAnimeList);
             } else {
-                alert("البريد أو الرمز غير صحيح!");
+                alert("البيانات غير صحيحة!");
             }
         }
 
-        function logoutOwner() {
-            isOwner = false;
-            document.getElementById('roleBadge').innerText = "آمن 100%";
-            document.getElementById('roleBadge').style.backgroundColor = "#2ed573";
-            document.getElementById('ownerPanel').style.display = 'none';
-            document.getElementById('loginBtn').innerText = "دخول المالك";
-            document.getElementById('loginBtn').onclick = () => openModal('loginModal');
-            renderCards(globalAnimeList);
-        }
-
-        // الاستماع المباشر للتحديثات من Firebase
+        // Firebase Sync
         window.addEventListener('load', () => {
             const checkFirebase = setInterval(() => {
                 if (window.db) {
                     clearInterval(checkFirebase);
-                    
-                    // ربط القراءة المباشرة
                     window.onSnapshot(window.collection(window.db, "animes"), (snapshot) => {
                         globalAnimeList = [];
                         snapshot.forEach((doc) => {
                             globalAnimeList.push({ id: doc.id, ...doc.data() });
                         });
-                        renderCards(globalAnimeList);
+                        renderGrid(globalAnimeList);
                     });
                 }
             }, 300);
         });
 
-        // إضافة أنمي جديد إلى Firebase سحابياً
+        // Add Anime
         async function addAnimeToFirebase() {
-            const title = document.getElementById('titleInput').value.trim();
-            const category = document.getElementById('categoryInput').value.trim() || "عام";
-            const size = document.getElementById('sizeInput').value.trim() || "150MB";
-            const image = document.getElementById('imageInput').value.trim() || "https://via.placeholder.com/150x200?text=Anime";
-            const videoUrl = document.getElementById('videoInput').value.trim() || "#";
+            const title = document.getElementById('animeTitle').value.trim();
+            const category = document.getElementById('animeCat').value.trim() || "عام";
+            const year = document.getElementById('animeYear').value.trim() || "2024";
+            const poster = document.getElementById('animePoster').value.trim() || "https://via.placeholder.com/300x400?text=Anime";
+            const desc = document.getElementById('animeDesc').value.trim() || "لا توجد قصة متاحة حالياً.";
+
+            const epTitle = document.getElementById('epTitle').value.trim() || "الحلقة 01";
+            const epSize = document.getElementById('epSize').value.trim() || "150MB";
+            const epUrl = document.getElementById('epWatchUrl').value.trim() || "#";
 
             if (!title) return alert("يرجى إدخال اسم العمل!");
 
+            const episodes = [{
+                title: epTitle,
+                size: epSize,
+                url: epUrl
+            }];
+
             try {
                 await window.addDoc(window.collection(window.db, "animes"), {
-                    title, category, size, image, videoUrl, rating: "5.0", createdAt: Date.now()
+                    title, category, year, poster, desc, episodes, createdAt: Date.now()
                 });
-                
-                alert("تمت الإضافة بنجاح! وستظهر فوراً عند كافة مستخدمي التطبيق.");
-                document.getElementById('titleInput').value = "";
-                document.getElementById('categoryInput').value = "";
-                document.getElementById('sizeInput').value = "";
-                document.getElementById('imageInput').value = "";
-                document.getElementById('videoInput').value = "";
-            } catch (e) {
-                alert("حدث خطأ أثناء الإضافة: " + e.message);
+                alert("تمت إضافة العمل بنجاح!");
+                document.getElementById('animeTitle').value = "";
+                document.getElementById('animePoster').value = "";
+            } catch(e) {
+                alert("خطأ أثناء الإضافة: " + e.message);
             }
         }
 
-        // حذف عمل من السيرفر السحابي
-        async function deleteAnimeFromFirebase(docId) {
-            if (confirm("هل أنت تأكد من حذف هذا العمل نهائياً من السيرفر؟")) {
-                try {
-                    await window.deleteDoc(window.doc(window.db, "animes", docId));
-                } catch (e) {
-                    alert("خطأ أثناء الحذف: " + e.message);
-                }
-            }
-        }
-
-        // عرض البطاقات
-        function renderCards(list) {
+        // Render Grid
+        function renderGrid(list) {
             const grid = document.getElementById('animeGrid');
             grid.innerHTML = "";
 
             let filtered = list;
-            if (activeCategory !== 'الكل') {
+            if(activeCategory !== 'الكل') {
                 filtered = filtered.filter(i => i.category === activeCategory);
             }
 
             if(filtered.length === 0) {
-                grid.innerHTML = '<p style="color:#aaa; grid-column:1/-1; text-align:center;">لا توجد أعمال مضافة حالياً.</p>';
+                grid.innerHTML = '<p style="color:var(--text-muted); grid-column:1/-1; text-align:center;">لا توجد أعمال مضافة حالياً.</p>';
                 return;
             }
 
             filtered.forEach(item => {
-                const deleteBtn = isOwner ? `<button class="action-btn delete-btn" onclick="deleteAnimeFromFirebase('${item.id}')">حذف 🗑️</button>` : '';
-
+                const epCount = item.episodes ? item.episodes.length : 1;
                 const card = document.createElement('div');
                 card.className = 'anime-card';
-                card.innerHTML = `
-                    <div class="poster-wrapper">
-                        <img src="${item.image}" alt="${item.title}" class="poster">
-                    </div>
-                    <div class="card-details">
-                        <div class="anime-title">${item.title}</div>
-                        <div class="meta-info">
-                            <span>${item.category}</span>
-                            <span>💾 ${item.size}</span>
-                        </div>
-                        <button class="action-btn" onclick="downloadVideo('${item.title}', '${item.videoUrl}')">تنزيل 📥</button>
-                        ${deleteBtn}
-                    </div>
-                `;
-                grid.appendChild(card);
-            });
-        }
-
-        function filterByCategory(cat) {
-            activeCategory = cat;
-            document.querySelectorAll('.category-chip').forEach(chip => {
-                chip.classList.toggle('active', chip.innerText.includes(cat) || (cat==='الكل' && chip.innerText==='الكل'));
-            });
-            renderCards(globalAnimeList);
-        }
-
-        function searchAnime() {
-            const q = document.getElementById('searchInput').value.toLowerCase();
-            const results = globalAnimeList.filter(i => i.title.toLowerCase().includes(q) || i.category.toLowerCase().includes(q));
-            renderCards(results);
-        }
-
-        function downloadVideo(title, url) {
-            alert(`جاري تنزيل: ${title}`);
-            if(url !== "#") window.open(url, '_blank');
-        }
-    </script>
-</body>
-</html>
+  
