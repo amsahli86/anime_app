@@ -152,7 +152,7 @@
             box-shadow: 0 0 12px var(--neon-glow);
         }
 
-        /* View Filters */
+        /* View Filters (الكل / المفضلات / جاري المشاهدة) */
         .view-tabs {
             display: flex;
             justify-content: center;
@@ -461,12 +461,6 @@
             box-shadow: 0 0 10px var(--neon-glow);
         }
 
-        .btn-edit {
-            background: rgba(255, 165, 0, 0.2);
-            color: #ffa502;
-            border: 1px solid rgba(255, 165, 0, 0.4);
-        }
-
         .btn-download {
             background: transparent;
             color: #fff;
@@ -509,36 +503,13 @@
             font-weight: 700;
             cursor: pointer;
         }
-
-        /* Edit Episode Modal */
-        .edit-modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(8px);
-            z-index: 300;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-        }
-
-        .edit-modal-content {
-            background: var(--card-bg);
-            border: 1px solid var(--neon-blue);
-            border-radius: 16px;
-            width: 100%;
-            max-width: 450px;
-            padding: 20px;
-            box-shadow: 0 0 25px var(--neon-glow);
-        }
     </style>
 
     <!-- Firebase SDKs -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyAmhWP8wdACdpYz1RbmfR2pDYTG5bguwM8",
@@ -568,7 +539,6 @@
         window.doc = doc;
         window.setDoc = setDoc;
         window.getDoc = getDoc;
-        window.updateDoc = updateDoc;
     </script>
 </head>
 <body>
@@ -597,14 +567,14 @@
         <input type="text" id="searchInput" class="search-input" placeholder="🔍 ابحث عن أنمي، فيلم، تصنيف..." onkeyup="searchAnime()">
     </div>
 
-    <!-- View Tabs -->
+    <!-- View Tabs (الكل / المفضلة / جاري المشاهدة) -->
     <div class="view-tabs">
         <button class="tab-btn active" onclick="switchView('all', this)">الكل</button>
         <button class="tab-btn" onclick="switchView('fav', this)">❤️ المفضلات</button>
         <button class="tab-btn" onclick="switchView('watching', this)">⏳ جاري المشاهدة</button>
     </div>
 
-    <!-- Categories -->
+    <!-- Expanded Categories -->
     <div class="categories">
         <div class="chip active" onclick="filterCategory('الكل')">الكل</div>
         <div class="chip" onclick="filterCategory('أكشن')">🔥 أكشن</div>
@@ -660,4 +630,24 @@
                 <span id="modalCat">التصنيف</span> • 
                 <span id="modalYear">السنة</span>
             </div>
-            <div class=
+            <div class="details-desc" id="modalDesc">قصة الأنمي...</div>
+
+            <div class="episodes-title" style="font-weight:700; margin-bottom:10px;">قائمة الحلقات 🎬</div>
+            <div id="episodesList"></div>
+
+            <button id="deleteAnimeBtn" class="owner-btn" style="background:#ff3f34; color:#fff; width:100%; margin-top:20px; display:none;">حذف هذا العمل نهائياً 🗑️</button>
+        </div>
+    </div>
+
+    <script>
+        const OWNER_EMAIL = "amsahli86@gmail.com";
+        let currentUser = null;
+        let userData = { favorites: [], watching: [], watchedEpisodes: {} };
+        let globalAnimeList = [];
+        let activeCategory = 'الكل';
+        let currentView = 'all';
+        let currentSelectedAnime = null;
+
+        // Initialize Auth listener
+        window.addEventListener('load', () => {
+    
