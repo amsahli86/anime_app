@@ -650,4 +650,311 @@
 
         // Initialize Auth listener
         window.addEventListener('load', () => {
-    
+            const checkReady = setInterval(() => {
+                if (window.auth && window.db) {
+                    clearInterval(checkReady);
+                    
+                    window.onAuthStateChanged(window.auth, async (user) => {
+                        currentUser = user;
+                        if (user) {
+                            document.getElementById('authBtn').innerText = "خروج 🚪";
+                            document.getElementById('userImg').src = user.photoURL || "https://via.placeholder.com/32";
+                            document.getElementById('userImg').style.display = "block";
+                            
+                            // Check if Owner
+                            if(user.email === OWNER_EMAIL) {
+                                document.getElementById('ownerPanel').style.display = 'block';
+                            } else {
+                                document.getElementById('ownerPanel').style.display = 'none';
+                            }
+
+                            // Sync User Saved Data
+                            await loadUserData();
+                        } else {
+                            document.getElementById('authBtn').innerText = "تسجيل الدخول 🔑";
+                            document.getElementById('userImg').style.display = "none";
+                            document.getElementById('ownerPanel').style.display = 'none';
+                            userData = { favorites: [], watching: [], watchedEpisodes: {} };
+                        }
+                        renderGrid(globalAnimeList);
+                    });
+
+                    // Sync Animes
+                    window.onSnapshot(window.collection(window.db, "animes"), (snapshot) => {
+                        globalAnimeList = [];
+                        snapshot.forEach((doc) => {
+                            globalAnimeList.push({ id: doc.id, ...doc.data() });
+                        });
+                        renderGrid(globalAnimeList);
+                    });
+                }
+            }, 300);
+        });
+
+        // Google Authentication Handle
+        async function handleAuth() {
+            if (currentUser) {
+                if(confirm("هل تريد تسجيل الخروج؟")) {
+                    await window.signOut(window.auth);
+                }
+            } else {
+                try {
+                    await window.signInWithPopup(window.auth, window.provider);
+                } catch (e) {
+                    alert("تعذر تسجيل الدخول: " + e.message);
+                }
+            }
+        }
+
+        // Fetch User Saved State from Firestore
+        async function loadUserData() {
+            if(!currentUser) return;
+            const ref = window.doc(window.db, "users", currentUser.uid);
+            const snap = await window.getDoc(ref);
+            if(snap.exists()) {
+                userData = snap.data();
+                if(!userData.favorites) userData.favorites = [];
+                if(!userData.watching) userData.watching = [];
+                if(!userData.watchedEpisodes) userData.watchedEpisodes = {};
+            }
+        }
+
+        async function saveUserData() {
+            if(!currentUser) return;
+            await window.setDoc(window.doc(window.db, "users", currentUser.uid), userData, { merge: true });
+        }
+
+        // Add Anime
+        async function addAnimeToFirebase() {
+            const title = document.getElementById('animeTitle').value.trim();
+            const category = document.getElementById('animeCat').value.trim() || "عام";
+            const year = document.getElementById('animeYear').value.trim() || "2024";
+            const poster = document.getElementById('animePoster').value.trim() || "https://via.placeholder.com/300x400?text=Anime";
+            const desc = document.getElementById('animeDesc').value.trim() || "لا توجد قصة متاحة.";
+
+            const epTitle = document.getElementById('epTitle').value.trim() || "الحلقة 01";
+            const epSize = document.getElementById('epSize').value.trim() || "150MB";
+            const epUrl = document.getElementById('epWatchUrl').value.trim() || "#";
+
+            if (!title) return alert("يرجى كتابة اسم العمل!");
+
+            const episodes = [{ title: epTitle, size: epSize, url: epUrl }];
+
+            try {
+                await window.addDoc(window.collection(window.db, "animes"), {
+                    title, category, year, poster, desc, episodes, createdAt: Date.now()
+                });
+                alert("تم نشر العمل بنجاح!");
+                document.getElementById('animeTitle').value = "";
+                document.getElementById('animePoster').value = "";
+            } catch(e) {
+                alert("خطأ أثناء الإضافة: " + e.message);
+            }
+        }
+
+        // Render Grid with User Saved States
+        function renderGrid(list) {
+            const grid = document.getElementById('animeGrid');
+            grid.innerHTML = "";
+
+            let filtered = list;
+
+            // View Tabs Filter
+            if(currentView === 'fav') {
+                filtered = filtered.filter(i => userData.favorites.includes(i.id));
+            } else if(currentView === 'watching') {
+                filtered = filtered.filter(i => userData.watching.includes(i.id));
+            }
+
+            // Category Filter
+            if(activeCategory !== 'الكل') {
+                filtered = filtered.filter(i => i.category.includes(activeCategory));
+            }
+
+            if(filtered.length === 0) {
+                grid.innerHTML = '<p style="color:var(--text-muted); grid-column:1/-1; text-align:center; padding:30px;">لا توجد أعمال لعرضها.</p>';
+                return;
+            }
+
+            filtered.forEach(item => {
+                const epCount = item.episodes ? item.episodes.length : 1;
+                const card = document.createElement('div');
+                card.className = 'anime-card';
+                card.onclick = () => openDetailModal(item);
+                card.innerHTML = `
+                    <div class="poster-container">
+                        <img src="${item.poster}" alt="${item.title}">
+                        <div class="episodes-badge">${epCount} حلقة</div>
+                    </div>
+                    <div class="card-info">
+                        <div class="anime-title">${item.title}</div>
+                        <div class="anime-meta">
+                            <span>${item.category}</span>
+                            <span>${item.year}</span>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // Modal Logic
+        function openDetailModal(anime) {
+            currentSelectedAnime = anime;
+            document.getElementById('modalBg').style.backgroundImage = `url('${anime.poster}')`;
+            document.getElementById('modalTitle').innerText = anime.title;
+            document.getElementById('modalCat').innerText = anime.category;
+            document.getElementById('modalYear').innerText = anime.year;
+            document.getElementById('modalDesc').innerText = anime.desc;
+
+            updateStatusButtons();
+            renderEpisodesList();
+
+            const delBtn = document.getElementById('deleteAnimeBtn');
+            if(currentUser && currentUser.email === OWNER_EMAIL) {
+                delBtn.style.display = 'block';
+                delBtn.onclick = () => deleteAnime(anime.id);
+            } else {
+                delBtn.style.display = 'none';
+            }
+
+            document.getElementById('detailModal').style.display = 'block';
+        }
+
+        function renderEpisodesList() {
+            const epContainer = document.getElementById('episodesList');
+            epContainer.innerHTML = "";
+
+            const animeId = currentSelectedAnime.id;
+            const watchedList = userData.watchedEpisodes[animeId] || [];
+
+            if(currentSelectedAnime.episodes && currentSelectedAnime.episodes.length > 0) {
+                currentSelectedAnime.episodes.forEach((ep, index) => {
+                    const isWatched = watchedList.includes(index);
+                    const epCard = document.createElement('div');
+                    epCard.className = 'episode-card';
+                    epCard.innerHTML = `
+                        <div class="ep-info">
+                            <button class="ep-watched-btn ${isWatched ? 'watched' : ''}" onclick="toggleWatched(${index})">👁️</button>
+                            <div>
+                                <div class="ep-name">${ep.title}</div>
+                                <div class="ep-size">💾 ${ep.size}</div>
+                            </div>
+                        </div>
+                        <div class="ep-actions">
+                            <a href="${ep.url}" target="_blank" class="btn-action btn-watch">مشاهدة</a>
+                            <a href="${ep.url}" target="_blank" class="btn-action btn-download">تنزيل</a>
+                        </div>
+                    `;
+                    epContainer.appendChild(epCard);
+                });
+            } else {
+                epContainer.innerHTML = '<p style="color:var(--text-muted)">لا توجد حلقات مضافة بعد.</p>';
+            }
+        }
+
+        async function toggleWatched(epIndex) {
+            if(!currentUser) return alert("يرجى تسجيل الدخول أولاً لتتبع الحلقات المشاهدة!");
+            
+            const animeId = currentSelectedAnime.id;
+            if(!userData.watchedEpisodes[animeId]) userData.watchedEpisodes[animeId] = [];
+
+            const idx = userData.watchedEpisodes[animeId].indexOf(epIndex);
+            if(idx > -1) {
+                userData.watchedEpisodes[animeId].splice(idx, 1);
+            } else {
+                userData.watchedEpisodes[animeId].push(epIndex);
+            }
+
+            renderEpisodesList();
+            await saveUserData();
+        }
+
+        async function toggleFavorite() {
+            if(!currentUser) return alert("سجل دخولك بحساب Google أولاً!");
+            const id = currentSelectedAnime.id;
+            const idx = userData.favorites.indexOf(id);
+            if(idx > -1) {
+                userData.favorites.splice(idx, 1);
+            } else {
+                userData.favorites.push(id);
+            }
+            updateStatusButtons();
+            await saveUserData();
+            renderGrid(globalAnimeList);
+        }
+
+        async function toggleWatching() {
+            if(!currentUser) return alert("سجل دخولك بحساب Google أولاً!");
+            const id = currentSelectedAnime.id;
+            const idx = userData.watching.indexOf(id);
+            if(idx > -1) {
+                userData.watching.splice(idx, 1);
+            } else {
+                userData.watching.push(id);
+            }
+            updateStatusButtons();
+            await saveUserData();
+            renderGrid(globalAnimeList);
+        }
+
+        function updateStatusButtons() {
+            const id = currentSelectedAnime.id;
+            const favBtn = document.getElementById('favBtn');
+            const watchingBtn = document.getElementById('watchingBtn');
+
+            if(userData.favorites.includes(id)) {
+                favBtn.className = "btn-status fav-active";
+                favBtn.innerText = "❤️ في المفضلة";
+            } else {
+                favBtn.className = "btn-status";
+                favBtn.innerText = "🤍 إضافة للمفضلة";
+            }
+
+            if(userData.watching.includes(id)) {
+                watchingBtn.className = "btn-status watching-active";
+                watchingBtn.innerText = "⏳ جاري مشاهدته";
+            } else {
+                watchingBtn.className = "btn-status";
+                watchingBtn.innerText = "➕ جاري المشاهدة";
+            }
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').style.display = 'none';
+        }
+
+        async function deleteAnime(id) {
+            if(confirm("هل أنت تأكد من حذف هذا العمل نهائياً؟")) {
+                await window.deleteDoc(window.doc(window.db, "animes", id));
+                closeDetailModal();
+            }
+        }
+
+        function filterCategory(cat) {
+            activeCategory = cat;
+            document.querySelectorAll('.chip').forEach(c => {
+                c.classList.toggle('active', c.innerText.includes(cat) || (cat==='الكل' && c.innerText==='الكل'));
+            });
+            renderGrid(globalAnimeList);
+        }
+
+        function switchView(view, btn) {
+            currentView = view;
+            document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            
+            const titles = { all: "الأعمال المتاحة", fav: "قائمة المفضلة ❤️", watching: "أنميات قيد المشاهدة ⏳" };
+            document.getElementById('sectionTitle').innerText = titles[view];
+            
+            renderGrid(globalAnimeList);
+        }
+
+        function searchAnime() {
+            const q = document.getElementById('searchInput').value.toLowerCase();
+            const results = globalAnimeList.filter(i => i.title.toLowerCase().includes(q) || i.category.toLowerCase().includes(q));
+            renderGrid(results);
+        }
+    </script>
+</body>
+</html>
